@@ -1,8 +1,26 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, provide } from 'vue';
 import { RouterView } from 'vue-router';
 const isNavVisible = ref(true);
 const showLogin = ref(true);
+import Toast from 'primevue/toast';
+import ProgressSpinner from 'primevue/progressspinner';
+
+const isLoading = ref(false);
+const withSpinner = async (fn: () => Promise<any>) => {
+  let result: any = null;
+  fn().then((res) => result = res).finally(() => isLoading.value = false);
+
+  setTimeout(() => {
+    if (result === null) {
+      isLoading.value = true;
+    }
+  }, 500);
+
+  return result;
+};
+
+provide('withSpinner', withSpinner);
 
 let lastScrollPosition = 0;
 const tolerance = 70;
@@ -33,12 +51,18 @@ function handleScroll() {
 </script>
 
 <template>
-  <header :class="{ hidden: !isNavVisible }">
+  <Toast />
+  <header>
     <div class="wrapper">
       <div class="row navigation-links">
         <a class="logo-link" href="/">
-          <img class="logo-img" src="@/assets/logo-256x256.png" alt="Imprime actas" /><span class="logo-text">Imprime actas</span>
+          <img class="logo-img" src="@/assets/flag.png" alt="Imprime actas" /><span class="logo-text">Imprime
+            actas</span>
         </a>
+        <div class="spinner">
+          <ProgressSpinner :style='{ width: "3rem", height: "3rem", opacity: Number(isLoading) }' strokeWidth="8"
+            fill="transparent" animationDuration="0.9s" />
+        </div>
       </div>
     </div>
   </header>
@@ -46,7 +70,7 @@ function handleScroll() {
   <RouterView />
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 header {
   line-height: 1.5;
   position: fixed;
@@ -54,11 +78,7 @@ header {
   left: 0;
   right: 0;
   z-index: 100;
-  transition: transform 0.3s ease-in-out;
-
-  &.hidden {
-    transform: translateY(-100%);
-  }
+  background-image: linear-gradient(180deg, rgb(0 0 0 / 50%) -25%, rgba(9, 12, 121, 100) 100%);
 
   .logo-link {
     margin: 12px;
@@ -77,7 +97,13 @@ header {
       line-height: normal;
       vertical-align: middle;
       transition: text-shadow 0.2s ease;
+
       &:hover {
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.4), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.2);
+        background-color: initial;
+      }
+
+      &:active {
         text-shadow: 0 0 5px rgba(255, 255, 255, 0.4), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.2);
         background-color: initial;
       }
@@ -86,11 +112,9 @@ header {
 }
 
 .wrapper {
-  position: absolute;
   width: 100%;
-  background: rgb(0, 0, 0);
-  background: linear-gradient(180deg, rgb(0 0 0 / 50%) -25%, rgba(9, 12, 121, 0) 100%);
 }
+
 .navigation-links {
   justify-content: space-between;
 
@@ -152,5 +176,14 @@ header {
     font-size: 24px;
     min-width: 196px;
   }
+}
+
+.p-toast {
+  max-width: calc(100vw - 40px);
+}
+
+.spinner {
+  padding-top: 1rem;
+  padding-right: 1rem;
 }
 </style>
