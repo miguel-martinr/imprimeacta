@@ -28,8 +28,8 @@ export class VzlaLibreApi {
     return data.municipalities;
   }
 
-  async getParishesForMunicipality(municipalityCode: number) {
-    const { status, data: _data } = await this.axiosInstance.get<GetParishesResponse | ApiError>(`/municipalities/${municipalityCode}/parishes`);
+  async getParishes(stateCode: number, municipalityCode: number) {
+    const { status, data: _data } = await this.axiosInstance.get<GetParishesResponse | ApiError>(`states/${stateCode}/municipalities/${municipalityCode}/parishes`);
     if (status !== 200) {
       const error = _data as ApiError;
       throw new Error(error.message || "Ha ocurrido un error al obtener las parroquias");

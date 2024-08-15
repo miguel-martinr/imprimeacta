@@ -93,11 +93,11 @@ const fetchMunicipalities = async () => {
 }
 
 const fetchParishes = async () => {
-  if (!selectedMunicipality.value) {
+  if (!selectedState.value || !selectedMunicipality.value) {
     return;
   }
   try {
-    state.parishes = await getApi().getParishesForMunicipality(selectedMunicipality.value.code);
+    state.parishes = await getApi().getParishes(selectedState.value.code, selectedMunicipality.value.code);
   } catch (error: any) {
     showError(`No se han podido recuperar las parroquias: ${error.message}`);
   }
