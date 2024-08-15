@@ -22,6 +22,11 @@ export type Center = {
   name: string
 }
 
+export type Table = {  
+  code: number,
+  url: string
+}
+
 export type GetStatesResponse = {
   states: State[]
 }
@@ -36,5 +41,9 @@ export type GetParishesResponse = {
 
 export type GetCentersResponse = {
   centers: Center[]
+}
+
+export type GetTablesResponse = {
+  tables: Table[]
 }
 

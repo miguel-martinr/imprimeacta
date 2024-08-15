@@ -26,33 +26,52 @@
         <div v-if="shouldShowCenterInput" class="center-input-container">
           <label for="center" class="white-text">Centro</label>
           <AutoComplete v-model="selectedCenter" dropdown :suggestions="centers" @complete="searchCenter"
-            inputId="center" optionLabel="name" />
+            inputId="center" optionLabel="name" v-on:item-select="handleCenterSelection" />
         </div>
 
-        <div>{{ selectedState }}</div>
-        <div>{{ selectedMunicipality }}</div>
-        <div>{{ selectedParish }}</div>
-        <div>{{ selectedCenter }}</div>
+        <div v-if="shouldShowTableInput" class="table-input-container">
+          <label class="white-text">Mesa</label>
+          <!-- v-for -->
+          <div class="tables-container">
+            <div v-for="table in tables" :key="table.code" class="table-card">
+              <button @click="handleTableSelection(table)" class="table-button">
+                {{ table.code }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <canvas v-show="false" ref="canvas" id="canvas"></canvas>
+        <canvas v-show="false" class="acta-to-print" width="1312" height="884" ref="canvasResult" id="canvaresult" />
+        <div>
+          <a v-show="false" ref="linkToDownloadActaRef" href="" class="maduro-coño-e-tu-madre">Descargar Acta</a>
+        </div>
+        <img ref="imageActaResult" src="" />
+        <br>
       </div>
     </div>
   </main>
 </template>
+
 <script setup lang="ts">
 import { ref } from 'vue';
 import AutoComplete from 'primevue/autocomplete';
 import { getApi } from '@/api';
-import type { State, Municipality, Parish, Center } from '@/api/types';
+import type { State, Municipality, Parish, Center, Table } from '@/api/types';
 import { useToast } from 'primevue/usetoast';
 import { inject } from 'vue';
+import { processImage, getBase64Image } from '@/utils/images';
 
 const state: {
   states: State[],
   municipalities: Municipality[],
   parishes: Parish[],
-  centers: Center[]
+  centers: Center[],
 } = { states: [], municipalities: [], parishes: [], centers: [] };
 
-const withSpinner = inject('withSpinner') as  (fn: CallableFunction) => Promise<any>;
+const tables = ref<Table[]>([]);
+
+const withSpinner = inject('withSpinner') as (fn: CallableFunction) => Promise<any>;
 
 const fetchStates = async () => {
   getApi().getStates().then((fetchedStates) => {
@@ -95,6 +114,17 @@ const fetchCenters = async () => {
   }
 }
 
+const fetchTables = async () => {
+  if (!selectedCenter.value) {
+    return;
+  }
+  try {
+    tables.value = await getApi().getTablesForCenter(selectedCenter.value.code);
+  } catch (error: any) {
+    showError(`No se han podido recuperar las mesas: ${error.message}`);
+  }
+}
+
 withSpinner(fetchStates);
 
 const toast = useToast();
@@ -104,6 +134,11 @@ const selectedMunicipality = ref<Municipality | null>(null);
 const selectedParish = ref<Parish | null>(null);
 const selectedCenter = ref<Center | null>(null);
 
+const canvas = ref<any>({});
+const canvasResult = ref<any>({});
+const linkToDownloadActaRef = ref<any>({});
+const imageActaResult = ref<any>({});
+
 const states = ref<State[]>([]);
 const municipalities = ref<Municipality[]>([]);
 const parishes = ref<Parish[]>([]);
@@ -112,6 +147,7 @@ const centers = ref<Center[]>([]);
 const shouldShowMunicipalityInput = ref(false);
 const shouldShowParishInput = ref(false);
 const shouldShowCenterInput = ref(false);
+const shouldShowTableInput = ref(false);
 
 const resetMunicipality = () => {
   shouldShowMunicipalityInput.value = false;
@@ -129,6 +165,11 @@ const resetCenter = () => {
   shouldShowCenterInput.value = false;
   selectedCenter.value = null;
   state.centers = [];
+};
+
+const resetTable = () => {
+  shouldShowTableInput.value = false;
+  tables.value = [];
 };
 
 const searchState = (e: { query: string }) => {
@@ -160,6 +201,7 @@ const handleStateSelection = () => {
   withSpinner(fetchMunicipalities);
   resetParish();
   resetCenter();
+  resetTable();
   shouldShowMunicipalityInput.value = true;
 }
 
@@ -167,14 +209,33 @@ const handleMunicipalitySelection = () => {
   resetParish();
   withSpinner(fetchParishes);
   resetCenter();
+  resetTable();
   shouldShowParishInput.value = true;
 }
 
 const handleParishSelection = () => {
-  shouldShowCenterInput.value = true;
-  selectedCenter.value = null;
-  state.centers = [];
+  resetCenter();
   withSpinner(fetchCenters);
+  resetTable();
+  shouldShowCenterInput.value = true;
+}
+
+const handleCenterSelection = () => {
+  resetTable();
+  withSpinner(fetchTables);
+  shouldShowTableInput.value = true;
+}
+
+const handleTableSelection = async (selectedTable: Table) => {
+  const image = new Image();
+  image.src = getApi().getImageUrl(selectedTable.url);
+  getBase64Image(image, (b: string) => {
+    const img = new Image();
+    img.onload = () => {
+      processImage(canvas, canvasResult, img, imageActaResult, linkToDownloadActaRef);
+    };
+    img.src = b;
+  });
 }
 
 </script>
@@ -207,13 +268,13 @@ const handleParishSelection = () => {
 }
 
 .instructions {
-  width: auto;
-  margin: auto;
-  padding: 0px 16px;
+  // width: 100%;
+  padding: 0px 16px 0px 16px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 16px;
+  width: 100%;
 }
 
 .main-container {
@@ -233,5 +294,26 @@ const handleParishSelection = () => {
 
 :deep(.p-autocomplete) {
   width: 100%;
+}
+
+.tables-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.table-button {
+  background: #00804d;
+  border-radius: 4px;
+  border: transparent;
+  padding: 8px 16px;
+  color: white;
+  box-shadow: 0 0 6px -1px black;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-block;
+  width: 4rem;
+  height: 4rem;
+  ;
 }
 </style>

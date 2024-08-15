@@ -23,12 +23,12 @@
         </div>
 
         <canvas v-show="false" ref="canvas" id="canvas"></canvas>
-        <canvas v-show="false" class="acta-to-print" width="1312" height="884" ref="canvaresult" id="canvaresult" />
+        <canvas v-show="false" class="acta-to-print" width="1312" height="884" ref="canvasResult" id="canvaresult" />
         <div>
-          <a v-show="false" ref="linkToDownloadActaRef" :href="linkToDownloadActa"
+          <a v-show="false" ref="linkToDownloadActaRef" href=""
             class="maduro-coño-e-tu-madre">Descargar Acta</a>
+          </div>
           <img ref="imageActaResult" src="" />
-        </div>
         <br>
       </div>
     </div>
@@ -36,12 +36,12 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
+import { processImage } from '@/utils/images';
 
 const canvas = ref<any>({});
-const canvaresult = ref<any>({});
+const canvasResult = ref<any>({});
 const imageActaResult = ref<any>({});
 const linkToDownloadActaRef = ref<any>({});
-const linkToDownloadActa = ref<any>('');
 
 async function handleFileUpload(event: Event) {
   const target = event.target as HTMLInputElement;
@@ -54,28 +54,7 @@ async function handleFileUpload(event: Event) {
   reader.onload = async (e) => {
     const img = new Image();
     img.onload = () => {
-      const ctx = canvas.value.getContext('2d');
-      if (!ctx) {
-        return;
-      }
-
-      canvas.value.width = img.width;
-      canvas.value.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
-      const stripCanvas = canvaresult.value;
-      const stripCtx = stripCanvas.getContext('2d');
-
-      //       drawImage(img, sx,sy,sWidth,sHeight,dx,dy,dWidth,dHeight)
-      stripCtx.drawImage(img, 0, 0, 656, 1766, 0, 0, 328, 883);
-      stripCtx.drawImage(img, 0, 1766, 656, 1766, 329, 0, 328, 883);
-      stripCtx.drawImage(img, 0, 3532, 656, 1766, 657, 0, 328, 883);
-      stripCtx.drawImage(img, 0, 5298, 656, 1766, 985, 0, 328, 883);
-      const actaDataURL = stripCanvas.toDataURL();
-      imageActaResult.value.src = actaDataURL;
-      linkToDownloadActaRef.value.href = actaDataURL;
-      linkToDownloadActaRef.value.download = 'acta.png';
-      linkToDownloadActaRef.value.click();
+      processImage(canvas, canvasResult, img, imageActaResult, linkToDownloadActaRef);
     };
 
     img.src = e.target?.result as string;
