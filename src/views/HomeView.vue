@@ -5,9 +5,11 @@
         <h1 class="title">Imprime el acta<br /></h1>
 
         <div class="buttons-wrapper">
-          <button class="maduro-coño-e-tu-madre search-button">
-            <router-link to="/buscar-acta">Busca tu acta</router-link>
-          </button>
+          <router-link to="/buscar-acta" class="maduro-coño-e-tu-madre">
+            <button class="search-button">
+              Busca tu acta
+            </button>
+          </router-link>
 
           <span>o</span>
 
@@ -25,10 +27,9 @@
         <canvas v-show="false" ref="canvas" id="canvas"></canvas>
         <canvas v-show="false" class="acta-to-print" width="1312" height="884" ref="canvasResult" id="canvaresult" />
         <div>
-          <a v-show="false" ref="linkToDownloadActaRef" href=""
-            class="maduro-coño-e-tu-madre">Descargar Acta</a>
-          </div>
-          <img ref="imageActaResult" src="" />
+          <a v-show="false" ref="linkToDownloadActaRef" href="" class="maduro-coño-e-tu-madre">Descargar Acta</a>
+        </div>
+        <img ref="imageActaResult" src="" />
         <br>
       </div>
     </div>
@@ -128,8 +129,10 @@ async function handleFileUpload(event: Event) {
   width: 100%;
 }
 
-.search-button a {
+.search-button {
   color: white;
+  background: inherit;
+  border: none;
   text-decoration: none;
   font-weight: bold;
   font-size: 20px;
